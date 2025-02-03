@@ -21,34 +21,40 @@
     
             <div class="product-info">
                 <h1>{{ product }}</h1>
-                <p v-if="inventory > 10">In stock</p>
+                <p v-if="inStock == false" :class="{ lineTrough: !inStock || inventory == 0 }">Out of stock</p>
+                <p v-else-if="inventory > 10">In stock</p>
                 <p v-else-if="inventory <= 10 && inventory > 0">Almost sold out!</p>
-                <p v-else>Out of stock</p>
+                <p v-else :class="{ lineTrough: !inStock || inventory == 0 }"> Out of stock </p>
                 <span v-show="onSale">On Sale</span>
                 <ul>
                     <li v-for="detail in details">{{ detail }}</li>
                 </ul>
+
                 <!-- <div v-for="variant in variants" :key="variant.variantId">
                     <p @mouseover="updateProduct(variant.variantImage)">
                         {{ variant.variantColor }}
                     </p>
                 </div> -->
-                
+
                 <div
-                class="color-box"
-                v-for="variant in variants"
-                :key="variant.variantId"
-                :style="{ backgroundColor:variant.variantColor }"
+                        class="color-box"
+                        v-for="variant in variants"
+                        :key="variant.variantId"
+                        :style="{ backgroundColor:variant.variantColor }"
+                        @mouseover="updateProduct(variant.variantImage)"
                 >
-                    <p @mouseover="updateProduct(variant.variantImage)">
-                    {{ variant.variantColor }}
-                    </p>
                 </div>
 
                 <div v-for="size in sizes">
                     <p> {{ size }} </p>
                 </div>
-                <button v-on:click="addToCart">Add to cart</button>
+                <button
+                        v-on:click="addToCart"
+                        :disabled="!inStock"
+                        :class="{ disabledButton: !inStock }"
+                >
+                    Add to cart
+                </button>
                 <button v-on:click="removeFromCart">Remove</button>
                 <div class="cart">
                         <p>Cart({{ cart }})</p>
