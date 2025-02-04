@@ -1,4 +1,4 @@
-<!doctype html>
+ <!doctype html>
 <html lang="ru">
     <head>
         <meta charset="UTF-8">
@@ -20,30 +20,24 @@
             </div>
     
             <div class="product-info">
-                <h1>{{ product }}</h1>
+                <h1>{{ title }}</h1>
                 <p v-if="inStock == false" :class="{ lineTrough: !inStock || inventory == 0 }">Out of stock</p>
                 <p v-else-if="inventory > 10">In stock</p>
                 <p v-else-if="inventory <= 10 && inventory > 0">Almost sold out!</p>
                 <p v-else :class="{ lineTrough: !inStock || inventory == 0 }"> Out of stock </p>
-                <span v-show="onSale">On Sale</span>
+                <span v-show="onSale">{{ sale }}</span>
                 <ul>
                     <li v-for="detail in details">{{ detail }}</li>
                 </ul>
 
-                <!-- <div v-for="variant in variants" :key="variant.variantId">
-                    <p @mouseover="updateProduct(variant.variantImage)">
-                        {{ variant.variantColor }}
-                    </p>
-                </div> -->
-
                 <div
-                        class="color-box"
-                        v-for="variant in variants"
-                        :key="variant.variantId"
-                        :style="{ backgroundColor:variant.variantColor }"
-                        @mouseover="updateProduct(variant.variantImage)"
-                >
-                </div>
+                class="color-box"
+                v-for="(variant, index) in variants"
+                :key="variant.variantId"
+                :style="{ backgroundColor:variant.variantColor }"
+                @mouseover="updateProduct(index)"
+                ></div>
+         
 
                 <div v-for="size in sizes">
                     <p> {{ size }} </p>
@@ -69,6 +63,7 @@
                  
         </div>
     </div>         
+
 
 </body>
 </html>
