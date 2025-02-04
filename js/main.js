@@ -4,7 +4,7 @@ Vue.component('product-review', {
     template: `
         <form class="review-form" @submit.prevent="onSubmit">
             <p v-if="errors.length">
-                <b>Please correct the following errors:</b>
+                <b>Please correct the following error(s):</b>
                 <ul>
                     <li v-for="error in errors">{{ error }}</li>
                 </ul>
@@ -41,9 +41,7 @@ Vue.component('product-review', {
                 </label>
             </p>
 
-            <p>
-                <input type="submit" value="Submit">
-            </p>
+            <button type="submit">Submit</button>
         </form>
     `,
     data() {
@@ -58,14 +56,24 @@ Vue.component('product-review', {
     methods: {
         onSubmit() {
             this.errors = [];
-            if (this.name && this.review && this.rating) {
+
+            if (this.recommend === "yes" && this.rating < 4) {
+                this.errors.push("If you recommend this product, the rating must be 4 or higher.");
+            }
+
+            if (this.name && this.review && this.rating >= 1 && !this.errors.length) {
                 let productReview = {
                     name: this.name,
                     review: this.review,
                     rating: this.rating,
-                    recommend: this.recommend
+                    recommend: this.recommend === "yes" ? "Recommends" : "Does not recommend"
                 };
-                eventBus.$emit('review-submitted', productReview);
+                let reviews = JSON.parse(localStorage.getItem("reviews")) || [];
+                reviews.push(productReview);
+                localStorage.setItem("reviews", JSON.stringify(reviews));
+
+                this.$emit('review-submitted', productReview);
+
                 this.name = null;
                 this.review = null;
                 this.rating = null;
@@ -74,10 +82,12 @@ Vue.component('product-review', {
                 if (!this.name) this.errors.push("Name required.");
                 if (!this.review) this.errors.push("Review required.");
                 if (!this.rating) this.errors.push("Rating required.");
+                if (this.recommend === null) this.errors.push("Recommend selection is required.");
             }
         }
     }
 });
+
 
 Vue.component('product-tabs', {
     props: {
@@ -107,12 +117,14 @@ Vue.component('product-tabs', {
             </ul>
 
             <div v-show="selectedTab === 'Reviews'">
+                <button @click="clearReviews" v-if="reviews.length">Clear Reviews</button>
                 <p v-if="!reviews.length">There are no reviews yet.</p>
                 <ul>
-                    <li v-for="review in reviews">
+                    <li v-for="review in reviews" :key="review.name">
                         <p>{{ review.name }}</p>
                         <p>Rating: {{ review.rating }}</p>
                         <p>{{ review.review }}</p>
+                        <p><strong>{{ review.recommend }}</strong></p>
                     </li>
                 </ul>
             </div>
@@ -137,8 +149,15 @@ Vue.component('product-tabs', {
             tabs: ["Reviews", "Make a Review", "Shipping", "Details"],
             selectedTab: "Reviews"
         };
+    },
+    methods: {
+        clearReviews() {
+            this.reviews = [];
+            localStorage.setItem("reviews", JSON.stringify(this.reviews));
+        }
     }
 });
+
 
 Vue.component('product', {
     props: {
@@ -156,7 +175,12 @@ Vue.component('product', {
             <div class="product-info">
                 <h1>{{ title }}</h1>
                 <p v-if="inStock">In Stock</p>
-                <p v-else class="lineTrough">Out of Stock</p>
+                <p v-else>Out of Stock</p>
+                <ul>
+                    <li v-for="detail in details">{{ detail }}</li>
+                </ul>
+                <p>Shipping: {{ shipping }}</p>
+
                 <div class="color-box"
                      v-for="(variant, index) in variants"
                      :key="variant.variantId"
@@ -164,14 +188,9 @@ Vue.component('product', {
                      @mouseover="updateProduct(index)">
                 </div>
 
-                <div v-for="size in sizes">
-                    <p>{{ size }}</p>
-                </div>
-
                 <button @click="addToCart" :disabled="!inStock" :class="{ disabledButton: !inStock }">
                     Add to cart
                 </button>
-                <button @click="removeFromCart">Remove from cart</button>
             </div>
 
             <product-tabs :reviews="reviews" :shipping="shipping" :details="details"></product-tabs>
@@ -198,16 +217,12 @@ Vue.component('product', {
                     variantQuantity: 0
                 }
             ],
-            sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
-            reviews: []
+            reviews: [] 
         };
     },
     methods: {
         addToCart() {
             this.$emit("add-to-cart", this.variants[this.selectedVariant].variantId);
-        },
-        removeFromCart() {
-            this.$emit("remove-from-cart", this.variants[this.selectedVariant].variantId);
         },
         updateProduct(index) {
             this.selectedVariant = index;
@@ -228,9 +243,10 @@ Vue.component('product', {
         }
     },
     mounted() {
-        eventBus.$on("review-submitted", productReview => {
-            this.reviews.push(productReview);
-        });
+        const savedReviews = localStorage.getItem("reviews");
+        if (savedReviews) {
+            this.reviews = JSON.parse(savedReviews);
+        }
     }
 });
 
