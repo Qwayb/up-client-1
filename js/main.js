@@ -72,7 +72,7 @@ Vue.component('product-review', {
                 reviews.push(productReview);
                 localStorage.setItem("reviews", JSON.stringify(reviews));
 
-                this.$emit('review-submitted', productReview);
+                eventBus.$emit('review-submitted', productReview);
 
                 this.name = null;
                 this.review = null;
@@ -124,7 +124,7 @@ Vue.component('product-tabs', {
                         <p>{{ review.name }}</p>
                         <p>Rating: {{ review.rating }}</p>
                         <p>{{ review.review }}</p>
-                        <p><strong>{{ review.recommend }}</strong></p>
+                        <p>{{ review.recommend }}</p>
                     </li>
                 </ul>
             </div>
@@ -152,9 +152,15 @@ Vue.component('product-tabs', {
     },
     methods: {
         clearReviews() {
-            this.reviews = [];
-            localStorage.setItem("reviews", JSON.stringify(this.reviews));
+            localStorage.removeItem("reviews");
+            this.reviews.splice(0);
+            eventBus.$emit("reviews-cleared");
         }
+    },
+    mounted() {
+        eventBus.$on("reviews-cleared", () => {
+            this.reviews = [];
+        });
     }
 });
 
@@ -247,6 +253,11 @@ Vue.component('product', {
         if (savedReviews) {
             this.reviews = JSON.parse(savedReviews);
         }
+
+        eventBus.$on("review-submitted", (review) => {
+            this.reviews.push(review);
+            localStorage.setItem("reviews", JSON.stringify(this.reviews));
+        });
     }
 });
 
